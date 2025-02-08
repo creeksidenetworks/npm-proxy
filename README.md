@@ -166,27 +166,39 @@ location / {
 }
 
 ```
-### Dell iDRAC 9
+### Dell Openmanage Enterprise / iDRAC9
 
-Note: Web console is not supported, use VNC instead.
+Note: To support virtual console, replace host header to real IP address.
 
 ```nginx
 location / {
-        proxy_pass https://10.1.50.102;
-        proxy_set_header Host 10.1.50.102;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
-        
-        proxy_ssl_verify off;
-        proxy_ssl_server_name on;
+    proxy_pass https://10.1.50.26;
+    proxy_set_header Host 10.1.50.26;  # Set host header to the IP address
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
 
-        # Rewrite embedded iDRAC IP in Virtual Console URLs
-        sub_filter 'https://10.1.50.102' 'https://idrac2.fmt.creekside.network';
-        sub_filter 'http://10.1.50.102' 'https://idrac2.fmt.creekside.network';
-        sub_filter_once off;
-        sub_filter_types text/html text/javascript text/css application/javascript;
+    proxy_ssl_verify off;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+}
 
+# WebSocket support for Virtual Console
+location /vnc/ {
+    proxy_pass https://10.1.50.26;
+    proxy_set_header Host 10.1.50.26;  # Set host header to the IP address
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+
+    # WebSocket support
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_read_timeout 86400;
+    
+    proxy_ssl_verify off;
 }
 ```
 
